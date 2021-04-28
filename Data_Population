@@ -1,0 +1,39 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup as BS
+url="https://www.census2011.co.in/district.php"
+URL="https://www.census2011.co.in"
+r=requests.get(url)
+soup=BS(r.text,'html.parser')
+res=soup.find_all('td',{'class':'alignleft'})
+temp=0
+t=[]
+links={}
+for i in res:
+    if temp==0:
+        t.append(i.a.text)
+        t.append(i.a['href'])
+    else:
+        if i.a.text in links:
+            links[i.a.text].append(t)
+        else:
+            links[i.a.text]=[]
+            links[i.a.text].append(t)
+        t=[]
+    temp=~temp
+def get_data(URL):
+    res={}
+    r=requests.get(URL)
+    df_list = pd.read_html(r.text)
+    df=df_list[0]
+    name=df['Description'].tolist()
+    value=df['2011'].tolist()
+    for (i,j) in zip(name,value):
+        res[i]=j
+    return res
+def Get_Data(State,District):
+    for i in links[State]:
+        if i[0]==District:
+            return get_data(URL+i[1])
+    
+    
